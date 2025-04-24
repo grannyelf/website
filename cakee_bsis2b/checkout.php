@@ -21,14 +21,11 @@ $simulatePayment = true; // Set to true to simulate a successful payment, false 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userId = $_SESSION['user_id']; 
-    $deliveryMethod = $_POST['delivery_method'] ?? '';
-    $paymentMethod = $_POST['payment_method'] ?? '';
-    $address = $_POST['address'] ?? '';
     $status = 'Pending';
 
     // Insert the order into the database
-    $stmt = $conn->prepare("INSERT INTO orders (user_id, total_amount, delivery_method, payment_method, address, status) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("idssss", $userId, $totalAmount, $deliveryMethod, $paymentMethod, $address, $status);
+    $stmt = $conn->prepare("INSERT INTO orders (user_id, total_amount, status) VALUES (?, ?, ?)");
+    $stmt->bind_param("ids", $userId, $totalAmount, $status);
 
     if ($stmt->execute()) {
         $orderId = $stmt->insert_id; // Get the inserted order ID

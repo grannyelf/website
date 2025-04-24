@@ -108,7 +108,8 @@ if ($_SESSION['role'] !== 'admin') {
             <a href="add-product.php">Add Product</a>
             <a href="user_orders.php">View Orders</a>
             <a href="productlist.php">View Products</a>
-            <a href="productlist.php">Manage Users</a>
+            <a href="manage_user.php">Manage Users</a>
+            <a href="admin_help.php">Help Request</a>
             <a href="logout.php">Logout</a>
         </nav>
     </header>

@@ -106,6 +106,7 @@ $result = $conn->query("SELECT * FROM products");
     <h1>Cakee Cakery</h1>
     <nav>
         <a href="about.php">About</a>
+        <a href="user_help.php">Help Support</a>
         <a href="cart.php">My Cart</a>
         <a href="logout.php">Logout</a>
     </nav>

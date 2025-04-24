@@ -7,7 +7,21 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 include 'database.php';
 
 // Fetch orders with user information including address
-$stmt = $conn->prepare("SELECT orders.*, users.full_name, users.address FROM orders INNER JOIN users ON orders.user_id = users.id");
+$stmt = $conn->prepare("
+    SELECT 
+        orders.id AS order_id,
+        orders.total_amount,
+        orders.status,
+        orders.created_at,
+        users.full_name,
+        users.address,
+        products.name AS product_name,
+        order_items.quantity
+    FROM orders
+    INNER JOIN users ON orders.user_id = users.id
+    INNER JOIN order_items ON orders.id = order_items.order_id
+    INNER JOIN products ON order_items.product_id = products.id
+");
 $stmt->execute();
 $result = $stmt->get_result();
 ?>
@@ -71,29 +85,28 @@ $result = $stmt->get_result();
 </header>
 
 <main>
-    <table>
+<table>
+    <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Total</th>
+        <th>Date</th>
+        <th>Status</th>
+    </tr>
+    <?php while ($row = $result->fetch_assoc()): ?>
         <tr>
-            <th>User</th>
-            <th>Product</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Address</th> <!-- Add Address column -->
+            <td><?= $row['order_id'] ?></td>
+            <td><?= htmlspecialchars($row['full_name']) ?></td>
+            <td><?= htmlspecialchars($row['product_name']) ?></td>
+            <td><?= $row['quantity'] ?></td>
+            <td>₱<?= number_format($row['total_amount'], 2) ?></td>
+            <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
+            <td><?= htmlspecialchars($row['status']) ?></td>
         </tr>
-        <?php while ($row = $result->fetch_assoc()): ?>
-            <tr>
-                <td><?= htmlspecialchars($row['full_name']) ?></td> <!-- User's full name -->
-                <td><?= htmlspecialchars($row['product_name'] ?? 'N/A') ?></td>
-                <td><?= date("F d, Y", strtotime($row['order_date'])) ?></td>
-                <td class="status"><?= htmlspecialchars($row['status']) ?></td>
-                <td><?= htmlspecialchars($row['address']) ?></td> <!-- User's address -->
-            </tr>
-        <?php endwhile; ?>
-        <?php if ($result->num_rows === 0): ?>
-            <tr>
-                <td colspan="5">No orders found.</td>
-            </tr>
-        <?php endif; ?>
-    </table>
+    <?php endwhile; ?>
+</table>
 </main>
 
 </body>

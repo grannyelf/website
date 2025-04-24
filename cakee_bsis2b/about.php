@@ -26,7 +26,7 @@ $result = $conn->query("SELECT * FROM products");
     <main>
         <section class="hero">
             <h2>About Us!</h2>
-            <p>Check out our Discord Server for more info about our website!</p>
+            <p>Check out our Discord Server for more info about our website! <a href="https://youtu.be/xvFZjo5PgG0?si=GYHpK69UnOakzPLO">https://discord.gg/FreeSource</a></p>
         </section>
     </main>
     <footer>
