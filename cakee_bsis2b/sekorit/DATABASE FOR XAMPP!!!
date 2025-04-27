@@ -35,6 +35,7 @@ CREATE TABLE order_items (
     order_id INT,
     product_id INT,
     quantity INT,
+    custom_text VARCHAR(255) NULL;
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
@@ -56,6 +57,7 @@ CREATE TABLE logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
     action VARCHAR(50) NOT NULL, -- 'Done' or 'Cancelled'
+    custom_text VARCHAR(255) NULL;
     admin_id INT NOT NULL,
     action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

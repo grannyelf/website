@@ -111,7 +111,7 @@ if (empty($products) && empty($cartCustomized)): ?>
 
             if ($cake):
                 $subtotal = ($cake['price'] + $item['custom_fee']) * $item['quantity'];
-                $total += $subtotal;
+                $grandTotal += $subtotal;
             ?>
             <tr>
                 <td><?= htmlspecialchars($cake['name']) ?> <br><small>🎀 Custom: "<?= htmlspecialchars($item['custom_text']) ?>"</small></td>
@@ -133,7 +133,6 @@ if (empty($products) && empty($cartCustomized)): ?>
 
 
     <div class="total">
-        <p><strong>Cart Total: ₱<?= number_format($total, 2) ?></strong></p>
         <p>Delivery Address: <?= htmlspecialchars($userAddress) ?: "No address on file" ?></p>
         <p>Base Delivery Fee: ₱<?= number_format($baseFee, 2) ?></p>
         <p>Extra Distance Charge: ₱<?= number_format($additionalFee, 2) ?> (Distance: <?= $simulatedDistance ?> km)</p>
@@ -141,8 +140,10 @@ if (empty($products) && empty($cartCustomized)): ?>
     </div>
 
     <form action="checkout.php" method="post">
+        <input type="hidden" name="grandTotal" value="<?= $grandTotal ?>">
         <button type="submit" class="checkout-btn">Proceed to Checkout</button>
     </form>
+
     <form action="user_dashb.php" method="post">
         <button type="submit" class="checkout-btn">Shop More</button>
     </form>

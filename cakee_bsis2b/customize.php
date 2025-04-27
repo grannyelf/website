@@ -2,6 +2,22 @@
 session_start();
 include 'database.php';
 
+// Check if user is logged in and has an active order ID
+if (!isset($_SESSION['order_id'])) {
+    // If no order ID exists, create a new order for the user
+    $userId = $_SESSION['user_id']; // Assuming you store user_id in the session
+    
+    $orderStmt = $conn->prepare("INSERT INTO orders (user_id, status) VALUES (?, ?)");
+    $status = 'Pending'; // Assign the status before binding
+    $orderStmt->bind_param("is", $userId, $status);
+    $orderStmt->execute();
+    
+    // Get the generated order ID
+    $_SESSION['order_id'] = $conn->insert_id;
+} else {
+    $orderId = $_SESSION['order_id'];
+}
+
 // Fetch available cakes
 $stmt = $conn->prepare("SELECT * FROM products WHERE stock > 0");
 $stmt->execute();
@@ -20,6 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'quantity' => 1,
             'custom_fee' => 50, // ₱50 fixed fee for customization
         ];
+
+        // Insert into order_items table
+        $quantity = 1; // You can adjust this if needed
+        $stmt = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, custom_text) VALUES (?, ?, ?, ?)");
+        
+        // Bind parameters correctly
+        $stmt->bind_param("iiis", $orderId, $productId, $quantity, $customText);
+        $stmt->execute();
+
         header('Location: cart.php');
         exit;
     }

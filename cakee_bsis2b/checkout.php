@@ -4,8 +4,10 @@ include 'database.php';
 
 $totalAmount = 0;
 $cart = $_SESSION['cart'] ?? [];
+$cartCustomized = $_SESSION['cart_customized'] ?? [];
+$grandTotal = $_POST['grandTotal'] ?? 0;
 
-// Calculate total amount
+// Calculate total amount for products
 foreach ($cart as $product_id => $qty) {
     $stmt = $conn->prepare("SELECT price FROM products WHERE id=?");
     $stmt->bind_param("i", $product_id);
@@ -14,7 +16,18 @@ foreach ($cart as $product_id => $qty) {
     $totalAmount += $result['price'] * $qty;
 }
 
-$amountInCentavos = $totalAmount * 100;
+// Calculate total amount for customized cakes
+foreach ($cartCustomized as $customItem) {
+    $stmt = $conn->prepare("SELECT price FROM products WHERE id=?");
+    $stmt->bind_param("i", $customItem['product_id']);
+    $stmt->execute();
+    $result = $stmt->get_result()->fetch_assoc();
+    $customPrice = $result['price'] + $customItem['custom_fee'];
+    $totalAmount += $customPrice * $customItem['quantity'];
+}
+
+// Use $grandTotal which includes delivery fees for the database
+$amountInCentavos = $grandTotal * 100;
 
 // Simulate payment (true = success, false = failure)
 $simulatePayment = true;
@@ -23,9 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userId = $_SESSION['user_id'];
     $status = 'Pending';
 
-    // Insert order into `orders` table
+    // Insert order into `orders` table with $grandTotal instead of $totalAmount
     $stmt = $conn->prepare("INSERT INTO orders (user_id, total_amount, status) VALUES (?, ?, ?)");
-    $stmt->bind_param("ids", $userId, $totalAmount, $status);
+    $stmt->bind_param("ids", $userId, $grandTotal, $status);
 
     if ($stmt->execute()) {
         $orderId = $stmt->insert_id;
@@ -37,18 +50,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $itemStmt->bind_param("iii", $orderId, $product_id, $qty);
             $itemStmt->execute();
         }
+        foreach ($cartCustomized as $customItem) {
+            $stmt = $conn->prepare("SELECT price FROM products WHERE id=?");
+            $stmt->bind_param("i", $customItem['product_id']);
+            $stmt->execute();
+            $result = $stmt->get_result()->fetch_assoc();
+            
+            if ($result) { // Ensure product exists before proceeding
+                $customPrice = $result['price'] + $customItem['custom_fee'];
+                $totalAmount += $customPrice * $customItem['quantity'];
+            }
+        }
 
         // Clear cart after successful order
         unset($_SESSION['cart']);
+        unset($_SESSION['cart_customized']);
 
-        // ✅ Redirect based on simulated payment result
-        if ($simulatePayment) {
-            echo "<script>setTimeout(() => { window.location.href = 'order_success.php'; }, 2500);</script>";
-        } else {
-            echo "<script>setTimeout(() => { window.location.href = 'checkout.php'; }, 2500);</script>";
-        }
-    } else {
-        echo "<p style='color: red;'>Error while processing order: " . $conn->error . "</p>";
     }
 }
 ?>
@@ -86,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="box">
         <h2>Redirecting to PayMongo...</h2>
-        <p>Please wait while we securely process your payment of <strong>₱<?= number_format($totalAmount, 2) ?></strong></p>
+        <p>Please wait while we securely process your payment of <strong>₱<?= number_format($grandTotal, 2) ?></strong></p>
     </div>
 </body>
 </html>
@@ -100,7 +117,7 @@ curl_setopt_array($curl, [
     CURLOPT_URL => "https://api.paymongo.com/v1/links",
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => json_encode([
+    CURLOPT_POSTFIELDS => json_encode([ 
         "data" => [
             "attributes" => [
                 "amount" => $amountInCentavos,
