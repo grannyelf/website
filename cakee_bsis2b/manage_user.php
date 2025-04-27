@@ -6,7 +6,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 }
 include 'database.php';
 
-$users = $conn->query("SELECT id, full_name, email FROM users WHERE role != 'admin'");
+$users = $conn->query("SELECT id, full_name, email, phone FROM users WHERE role != 'admin'");
 
 if (isset($_GET['delete'])) {
     $userId = (int)$_GET['delete'];
@@ -97,14 +97,15 @@ if (isset($_GET['delete'])) {
     <h2>Manage Registered Users. <a href="admin_dashb.php">Go back?</a></h2>
     <table>
         <tr>
-            <th>Name</th><th>Email</th><th>Action</th>
+            <th>Name</th><th>Email</th><th>Phone</th><th>Action</th>
         </tr>
         <?php while ($row = $users->fetch_assoc()): ?>
-        <tr>
-            <td><?= $row['full_name'] ?></td>
-            <td><?= $row['email'] ?></td>
-            <td><a href="?delete=<?= $row['id'] ?>" onclick="return confirm('Delete this user?')">Remove</a></td>
-        </tr>
+            <tr>
+                <td><?= $row['full_name'] ?></td>
+                <td><?= $row['email'] ?></td>
+                <td><?= htmlspecialchars($row['phone']) ?></td>
+                <td><a href="?delete=<?= $row['id'] ?>" onclick="return confirm('Delete this user?')">Remove</a></td>
+            </tr>
         <?php endwhile; ?>
     </table>
 </body>

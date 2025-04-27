@@ -18,6 +18,25 @@ if (!empty($cart)) {
         $total += $row['subtotal'];
     }
 }
+
+// Simulate distance in kilometers (later this will come from Google Maps API)
+$simulatedDistance = 6; // in km
+
+$baseFee = 30;
+$additionalFee = max(0, ceil($simulatedDistance - 5) * 10); // ₱10/km after 5km
+$deliveryFee = $baseFee + $additionalFee;
+
+$grandTotal = $total + $deliveryFee;
+
+// User address (assume user is logged in)
+$userAddress = "";
+if (isset($_SESSION['user_id'])) {
+    $userId = $_SESSION['user_id'];
+    $stmt = $conn->prepare("SELECT address FROM users WHERE id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $userAddress = $stmt->get_result()->fetch_assoc()['address'] ?? '';
+}
 ?>
 
 <!DOCTYPE html>
@@ -49,7 +68,9 @@ if (!empty($cart)) {
 
 <h2>🛒 Your Cart</h2>
 
-<?php if (empty($products)): ?>
+<?php
+$cartCustomized = $_SESSION['cart_customized'] ?? [];
+if (empty($products) && empty($cartCustomized)): ?>
     <p style="text-align:center;">Your cart is empty. <a href="user_dashb.php">Shop now</a>!</p>
 <?php else: ?>
     <table>
@@ -59,6 +80,8 @@ if (!empty($cart)) {
             <th>Qty</th>
             <th>Subtotal</th>
         </tr>
+
+        <!-- Show normal products -->
         <?php foreach ($products as $item): ?>
             <tr>
                 <td><?= htmlspecialchars($item['name']) ?></td>
@@ -77,9 +100,45 @@ if (!empty($cart)) {
                 <td>₱<?= number_format($item['subtotal'], 2) ?></td>
             </tr>
         <?php endforeach; ?>
+
+        <!-- Show customized cakes -->
+        <?php foreach ($cartCustomized as $item): 
+            // Fetch cake info from DB
+            $stmt = $conn->prepare("SELECT * FROM products WHERE id = ?");
+            $stmt->bind_param("i", $item['product_id']);
+            $stmt->execute();
+            $cake = $stmt->get_result()->fetch_assoc();
+
+            if ($cake):
+                $subtotal = ($cake['price'] + $item['custom_fee']) * $item['quantity'];
+                $total += $subtotal;
+            ?>
+            <tr>
+                <td><?= htmlspecialchars($cake['name']) ?> <br><small>🎀 Custom: "<?= htmlspecialchars($item['custom_text']) ?>"</small></td>
+                <td>₱<?= number_format($cake['price'] + $item['custom_fee'], 2) ?> <br><small>(+₱50 custom fee)</small></td>
+                <td>
+                <form action="customrec.php" method="post" style="display:inline;">
+                    <input type="hidden" name="custom_index" value="<?= htmlspecialchars($item['custom_text']) ?>">
+                    <button type="submit" style="background:none;border:none;color:red;font-size:1.2em;">❌</button>
+                </form>
+                </td>
+                <td>₱<?= number_format($subtotal, 2) ?></td>
+            </tr>
+            <?php endif; ?>
+        <?php endforeach; ?>
+
     </table>
 
-    <p class="total"><strong>Total: ₱<?= number_format($total, 2) ?></strong></p>
+    <!-- then the delivery fees and checkout part stay the same -->
+
+
+    <div class="total">
+        <p><strong>Cart Total: ₱<?= number_format($total, 2) ?></strong></p>
+        <p>Delivery Address: <?= htmlspecialchars($userAddress) ?: "No address on file" ?></p>
+        <p>Base Delivery Fee: ₱<?= number_format($baseFee, 2) ?></p>
+        <p>Extra Distance Charge: ₱<?= number_format($additionalFee, 2) ?> (Distance: <?= $simulatedDistance ?> km)</p>
+        <p><strong>Grand Total: ₱<?= number_format($grandTotal, 2) ?></strong></p>
+    </div>
 
     <form action="checkout.php" method="post">
         <button type="submit" class="checkout-btn">Proceed to Checkout</button>

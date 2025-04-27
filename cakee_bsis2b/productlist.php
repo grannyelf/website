@@ -113,6 +113,17 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
             height: 80px;
             border-radius: 10px;
         }
+        .action-btn {
+            background-color: #38a169;
+            color: white;
+            padding: 0.3em 0.6em;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .action-btn:hover {
+            background-color: #2f855a;
+        }
     </style>
 </head>
 <body>
@@ -144,7 +155,13 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
                     <td><img src="products/<?= htmlspecialchars($row['image']) ?>" alt="" class="product-img"></td>
                     <td><?= htmlspecialchars($row['name']) ?></td>
                     <td>₱<?= number_format($row['price'], 2) ?></td>
-                    <td><?= $row['stock'] ?></td>
+                    <td>
+                        <form action="update_stock.php" method="post" style="display: inline-flex; gap: 0.5em;">
+                            <input type="number" name="new_stock" value="<?= $row['stock'] ?>" min="0" style="width: 60px; padding: 0.2em;">
+                            <input type="hidden" name="product_id" value="<?= $row['id'] ?>">
+                            <button type="submit" class="action-btn">Update</button>
+                        </form>
+                    </td>
                     <td><?= $row['created_at'] ?></td>
                     <td><?= $row['updated_at'] ?></td>
                     <td>

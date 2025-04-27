@@ -40,7 +40,6 @@ if ($_SESSION['role'] !== 'admin') {
 
         h2 {
             text-align: center;
-            color: #f78ca2;
             margin-top: 1em;
         }
 

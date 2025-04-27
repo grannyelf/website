@@ -8,6 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];    // Password entered by user
     $address = $_POST['address'];      // User's home address
+    $phone = $_POST['phone'];      // User's phone numba
     
     // Ensure the password is not empty before processing
     if (!empty($password)) {
@@ -16,9 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $role = 'user'; // default role
 
         // Prepare and execute the query to insert into the users table
-        $stmt = $conn->prepare("INSERT INTO users (full_name, email, password, address, role) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssss", $full_name, $email, $hashed_password, $address, $role);
-        
+        $stmt = $conn->prepare("INSERT INTO users (full_name, email, password, address, phone, role) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $full_name, $email, $hashed_password, $address, $phone, $role);
         if ($stmt->execute()) {
             $message = "Registered successfully!";
         } else {
@@ -115,10 +115,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </header>
         <main>
             <form action="register.php" method="post">
+                <label for="full_name">Usernamer:</label>
                 <input type="text" name="full_name" placeholder="Username" required>
+                <label for="email">Email Address:</label>
                 <input type="email" name="email" placeholder="Email" required>
+                <label for="password">Password:</label>
                 <input type="password" name="password" placeholder="Password" required>
+                <label for="address">Home Address:</label>
                 <input type="text" name="address" placeholder="Home Address" required>
+                <label for="phone">Phone Number:</label>
+                <input type="text" name="phone" required>
                 <button type="submit">Register</button>
                 <a href="login.php">Already have an account? Login here</a>
             </form>

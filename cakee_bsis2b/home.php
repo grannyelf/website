@@ -29,7 +29,9 @@
     <main>
         <section class="hero">
             <h2>About Us!</h2>
-            <p>Check out our Discord Server for more info about our website! <a href="https://youtu.be/xvFZjo5PgG0?si=GYHpK69UnOakzPLO">https://discord.gg/FreeSource</a></p>
+            <p>Check out our Discord Server for more info <a href="https://youtu.be/xvFZjo5PgG0?si=GYHpK69UnOakzPLO">https://discord.gg/FreeSource</a></p>
+            <p>Contact us for reservation: <strong>911</strong><p>
+            <p>Follow ou</p>
         </section>
     </main>
     <footer>

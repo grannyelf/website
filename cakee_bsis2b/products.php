@@ -60,6 +60,7 @@ $result = $conn->query("SELECT * FROM products");
             <img src="products/<?= htmlspecialchars($row['image']) ?>" alt="<?= htmlspecialchars($row['name']) ?>">
             <div class="product-info">
                 <h3><?= htmlspecialchars($row['name']) ?></h3>
+                <p><strong>Stock:</strong> <?= $row['stock'] > 0 ? $row['stock'] : '<span style="color:red;">Out of stock</span>' ?></p>
                 <p>₱<?= number_format($row['price'], 2) ?></p>
             </div>
         </div>

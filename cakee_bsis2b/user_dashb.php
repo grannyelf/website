@@ -14,6 +14,7 @@ $result = $conn->query("SELECT * FROM products");
 <head>
     <meta charset="UTF-8">
     <title>User Dashboard - Cakee Cakery</title>
+    <link rel="icon" href="products/cakee yarn.png">
     <link rel="stylesheet" href="style.css">
     <style>
         body {
@@ -107,7 +108,9 @@ $result = $conn->query("SELECT * FROM products");
     <nav>
         <a href="about.php">About</a>
         <a href="user_help.php">Help Support</a>
+        <a href="customize.php">Customize Cake</a>
         <a href="cart.php">My Cart</a>
+        <a href="user_oderlist.php">Order List</a>
         <a href="logout.php">Logout</a>
     </nav>
 </header>
