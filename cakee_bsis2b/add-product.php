@@ -128,10 +128,8 @@ button[type="submit"]:hover {
     <header>
         <h1>Add a New Cake</h1>
         <nav>
-            <a href="admin_dashb.php">Dashboard</a>
-            <a href="user_orders.php">View Orders</a>
             <a href="productlist.php">View Products</a>
-            <a href="logout.php">Logout</a>
+            <a href="admin_dashb.php">Go Back?</a>
         </nav>
     </header>
     <main>

@@ -17,103 +17,92 @@ if ($_SESSION['role'] !== 'admin') {
             margin: 0;
             background: #fff8f0;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
         header {
             background-color: #f78ca2;
             color: white;
-            padding: 1.5em;
-            text-align: center;
+            padding: 1.5em 2em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        nav {
-            margin-top: 1em;
-            text-align: center;
-        }
-
-        nav a {
+        .logout-link {
             color: white;
             text-decoration: none;
-            margin: 0 1.5em;
             font-weight: bold;
-        }
-
-        h2 {
-            text-align: center;
-            margin-top: 1em;
-        }
-
-        .container {
-            padding: 2em;
-            max-width: 1000px;
-            margin: auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 2em;
-            background: white;
-        }
-
-        th, td {
-            padding: 1em;
-            border-bottom: 1px solid #eee;
-            text-align: center;
-        }
-
-        th {
-            background: #fdd1dd;
-            color: #333;
-        }
-
-        .action-btn {
+            background-color: #e53e3e;
             padding: 0.5em 1em;
-            border: none;
             border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
+            transition: background 0.3s;
         }
 
-        .edit-btn {
-            background-color: #fcb1bd;
-            color: white;
+        .logout-link:hover {
+            background-color: #c53030;
         }
 
-        .delete-btn {
-            background-color: #f56565;
-            color: white;
+        .dashboard-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2em;
         }
 
-        .add-product-btn {
-            display: inline-block;
+        .admin-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5em;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .admin-buttons a {
+            display: block;
             background-color: #f78ca2;
             color: white;
-            padding: 1em 2em;
+            padding: 1em;
             border-radius: 10px;
             text-decoration: none;
             font-weight: bold;
-            margin: 1em 0;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+
+        .admin-buttons a:hover {
+            background-color: #f45b7d;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1em;
+            background: #fde2e8;
+            font-size: 0.9em;
         }
     </style>
 </head>
 <body>
     <header>
-        <h2>Welcome, Admin <?= $_SESSION['name'] ?>!</h2>
-        <nav>
+        <h2>🎂 Welcome, Admin <?= htmlspecialchars($_SESSION['name']) ?>!</h2>
+        <a class="logout-link" href="logout.php">Logout</a>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="admin-buttons">
             <a href="add-product.php">Add Product</a>
             <a href="user_orders.php">View Orders</a>
             <a href="productlist.php">View Products</a>
             <a href="manage_user.php">Manage Users</a>
             <a href="admin_help.php">Help Request</a>
-            <a href="logout.php">Logout</a>
-        </nav>
-    </header>
-    <main>
-        <p>Welcome, Admin! Use the navigation above to manage your cakery.</p>
-    </main>
+        </div>
+    </div>
+
+    <footer>
+        &copy; <?= date("Y") ?> Cakee Cakery Admin Panel
+    </footer>
 </body>
 </html>

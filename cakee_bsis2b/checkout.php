@@ -22,8 +22,11 @@ foreach ($cartCustomized as $customItem) {
     $stmt->bind_param("i", $customItem['product_id']);
     $stmt->execute();
     $result = $stmt->get_result()->fetch_assoc();
-    $customPrice = $result['price'] + $customItem['custom_fee'];
-    $totalAmount += $customPrice * $customItem['quantity'];
+    
+    if ($result) {
+        $customPrice = $result['price'] + $customItem['custom_fee'];
+        $totalAmount += $customPrice; // ✅ Add to totalAmount!
+    }
 }
 
 // Use $grandTotal which includes delivery fees for the database
@@ -56,18 +59,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute();
             $result = $stmt->get_result()->fetch_assoc();
             
-            if ($result) { // Ensure product exists before proceeding
+            if ($result) {
                 $customPrice = $result['price'] + $customItem['custom_fee'];
-                $totalAmount += $customPrice * $customItem['quantity'];
+        
+                $stmtInsert = $conn->prepare("INSERT INTO custom_orders (order_id, product_id, custom_message, quantity, price) VALUES (?, ?, ?, ?, ?)");
+                $stmtInsert->bind_param("iisid", $orderId, $customItem['product_id'], $customItem['custom_text'], $customItem['quantity'], $customPrice);
+                $stmtInsert->execute();
             }
         }
+               
 
         // Clear cart after successful order
         unset($_SESSION['cart']);
         unset($_SESSION['cart_customized']);
-
+        unset($_SESSION['order_id']);
     }
 }
+
 ?>
 
 <!DOCTYPE html>

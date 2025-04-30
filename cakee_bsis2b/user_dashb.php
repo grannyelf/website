@@ -6,7 +6,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
 }
 include 'database.php';
 
-$result = $conn->query("SELECT * FROM products");
+$search = $_GET['search'] ?? '';
+$stmt = $conn->prepare("SELECT * FROM products WHERE name LIKE ?");
+$like = "%$search%";
+$stmt->bind_param("s", $like);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -119,7 +124,10 @@ $result = $conn->query("SELECT * FROM products");
     <h2>Welcome, <?= htmlspecialchars($_SESSION['name']) ?>! 🎂</h2>
     <p>Explore our sweet selection of cakes below:</p>
 </div>
-
+    <form method="get" style="text-align:center; margin-bottom: 1em;">
+        <input type="text" name="search" placeholder="Search cakes..." value="<?= htmlspecialchars($search ?? '') ?>" style="padding: 0.5em; width: 200px;">
+        <button type="submit" style="padding: 0.5em; background:#f78ca2; border:none; color:white;">Search</button>
+    </form>
 <div class="product-grid">
     <?php while ($row = $result->fetch_assoc()): ?>
         <div class="product-card">

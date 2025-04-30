@@ -14,27 +14,48 @@ $userId = $_SESSION['user_id'];
 // Get orders with products
 $stmt = $conn->prepare("
     SELECT 
-        orders.id AS order_id,
-        orders.total_amount,
-        orders.status,
-        orders.created_at,
-        products.name AS product_name,
-        products.image AS product_image,
-        order_items.quantity
-    FROM orders
-    INNER JOIN order_items ON orders.id = order_items.order_id
-    INNER JOIN products ON order_items.product_id = products.id
-    WHERE orders.user_id = ?
-    ORDER BY orders.created_at DESC
+        o.id AS order_id,
+        o.total_amount,
+        o.status,
+        o.created_at,
+        p.name AS product_name,
+        p.image AS product_image,
+        oi.quantity,
+        NULL AS custom_message,
+        p.price AS item_price
+    FROM orders o
+    INNER JOIN order_items oi ON o.id = oi.order_id
+    INNER JOIN products p ON oi.product_id = p.id
+    WHERE o.user_id = ?
+
+    UNION ALL
+
+    SELECT 
+        o.id AS order_id,
+        o.total_amount,
+        o.status,
+        o.created_at,
+        CONCAT('Customized: ', co.custom_message) AS product_name,
+        'custom_cake.png' AS product_image,
+        1 AS quantity,
+        co.custom_message,
+        co.price AS item_price
+    FROM orders o
+    INNER JOIN custom_orders co ON o.id = co.order_id
+    WHERE o.user_id = ?
+
+    ORDER BY created_at DESC
 ");
 
-$stmt->bind_param("i", $userId);
+$stmt->bind_param("ii", $userId, $userId);
+
 $stmt->execute();
 $result = $stmt->get_result();
 
 $orders = [];
 while ($row = $result->fetch_assoc()) {
     $orders[$row['order_id']]['info'] = [
+        'id' => $row['order_id'],
         'total' => $row['total_amount'],
         'status' => $row['status'],
         'created_at' => $row['created_at'],
@@ -42,9 +63,12 @@ while ($row = $result->fetch_assoc()) {
     $orders[$row['order_id']]['items'][] = [
         'name' => $row['product_name'],
         'qty' => $row['quantity'],
-        'image' => $row['product_image']
-    ];
+        'image' => $row['product_image'],
+        'custom_message' => $row['custom_message'] ?? null,
+        'price' => $row['item_price'] ?? 0
+    ];    
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -123,6 +147,7 @@ while ($row = $result->fetch_assoc()) {
         a.back {
             display: block;
             margin-top: 2em;
+            margin-bottom: 2em;
             text-align: center;
             color: #d94a76;
             text-decoration: none;
@@ -133,6 +158,7 @@ while ($row = $result->fetch_assoc()) {
 
 <div class="order-container">
     <h2>📋 My Orders</h2>
+    <a class="back" href="user_dashb.php">← Back to Shop</a>
 
     <?php if (empty($orders)): ?>
         <p style="text-align:center;">You haven't placed any orders yet. <a href="user_dashb.php">Shop now</a>!</p>
@@ -140,20 +166,26 @@ while ($row = $result->fetch_assoc()) {
         <?php foreach ($orders as $id => $order): ?>
             <div class="order-card">
                 <div class="order-header">
-                    <h3>Order #<?= $id ?></h3>
                     <div class="order-status"><?= htmlspecialchars($order['info']['status']) ?></div>
                 </div>
 
                 <div class="order-info">
+                    <p><strong>Order #: <?= $order['info']['id'] ?></strong></p>
                     <p><strong>Date:</strong> <?= date("F d, Y", strtotime($order['info']['created_at'])) ?></p>
                 </div>
 
                 <ul class="product-list">
                     <?php foreach ($order['items'] as $item): ?>
-                        <li style="display: flex; align-items: center; margin-bottom: 0.8em;">
-                        <img src="products/<?= htmlspecialchars($item['image']) ?>" alt="product image" style="height: 50px; width: 50px; border-radius: 8px; object-fit: cover; margin-right: 1em;">
-                        <span><?= $item['qty'] ?> × <?= htmlspecialchars($item['name']) ?></span>
-                    </li>
+                        <li style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 0.8em;">
+                            <?php if (!empty($item['image'])): ?>
+                                <div style="display: flex; align-items: center;">
+                                    <img src="products/<?= htmlspecialchars($item['image']) ?>" alt="product image" style="height: 50px; width: 50px; border-radius: 8px; object-fit: cover; margin-right: 1em;">
+                                    <span><?= $item['qty'] ?> × <?= htmlspecialchars($item['name']) ?></span>
+                                </div>
+                            <?php else: ?>
+                                <span style="margin-left: 0.5em;">🎂 <?= $item['qty'] ?> × <?= htmlspecialchars($item['name']) ?></span>
+                            <?php endif; ?>
+                        </li>
                     <?php endforeach; ?>
                 </ul>
 
@@ -161,9 +193,7 @@ while ($row = $result->fetch_assoc()) {
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
-
-    <a class="back" href="user_dashb.php">← Back to Shop</a>
 </div>
-
+<a class="back" href="user_dashb.php">← Back to Shop</a>
 </body>
 </html>

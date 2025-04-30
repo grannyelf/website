@@ -7,6 +7,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 include 'database.php';
 
 $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
+$search = $_GET['search'] ?? '';
+$stmt = $conn->prepare("SELECT * FROM products WHERE name LIKE ? ORDER BY created_at DESC");
+$like = "%$search%";
+$stmt->bind_param("s", $like);
+$stmt->execute();
+$result = $stmt->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -138,6 +144,10 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
 
 <div class="container">
     <h2>🍰 Product List</h2>
+    <form method="get" style="text-align:center; margin-bottom: 1em;">
+        <input type="text" name="search" placeholder="Search product name..." value="<?= htmlspecialchars($search) ?>" style="padding: 0.5em; width: 200px;">
+        <button type="submit" style="padding: 0.5em; background:#f78ca2; border:none; color:white;">Search</button>
+    </form>
 
     <?php if ($result->num_rows > 0): ?>
         <table>
@@ -153,8 +163,16 @@ $result = $conn->query("SELECT * FROM products ORDER BY created_at DESC");
             <?php while ($row = $result->fetch_assoc()): ?>
                 <tr>
                     <td><img src="products/<?= htmlspecialchars($row['image']) ?>" alt="" class="product-img"></td>
-                    <td><?= htmlspecialchars($row['name']) ?></td>
-                    <td>₱<?= number_format($row['price'], 2) ?></td>
+                    <td>
+                        <form action="update_product.php" method="post">
+                            <input type="hidden" name="product_id" value="<?= $row['id'] ?>">
+                            <input type="text" name="name" value="<?= htmlspecialchars($row['name']) ?>" required>
+                    </td>
+                    <td>
+                            <input type="number" step="0.01" name="price" value="<?= $row['price'] ?>" required>
+                            <button type="submit" class="action-btn">Save</button>
+                        </form>
+                    </td>
                     <td>
                         <form action="update_stock.php" method="post" style="display: inline-flex; gap: 0.5em;">
                             <input type="number" name="new_stock" value="<?= $row['stock'] ?>" min="0" style="width: 60px; padding: 0.2em;">

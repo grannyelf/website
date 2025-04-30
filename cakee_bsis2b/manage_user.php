@@ -104,7 +104,10 @@ if (isset($_GET['delete'])) {
                 <td><?= $row['full_name'] ?></td>
                 <td><?= $row['email'] ?></td>
                 <td><?= htmlspecialchars($row['phone']) ?></td>
-                <td><a href="?delete=<?= $row['id'] ?>" onclick="return confirm('Delete this user?')">Remove</a></td>
+                <td>
+                    <a href="?delete=<?= $row['id'] ?>" onclick="return confirm('Delete this user?')">Remove</a> |
+                    <a href="change_pass.php?id=<?= $row['id'] ?>">Change Password</a>
+                </td>
             </tr>
         <?php endwhile; ?>
     </table>

@@ -110,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <header>
             <h1>Create a New Account</h1>
             <nav>
-                <a href="home.php">Go Back?</a>
+                <a href="products.php">Go Back?</a>
             </nav>
         </header>
         <main>

@@ -24,7 +24,7 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
     total_amount DECIMAL(10, 2),
-    status ENUM('Pending', 'Paid', 'Done') DEFAULT 'Pending',
+    status ENUM('Pending', 'Cancelled', 'Done') DEFAULT 'Pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -35,7 +35,8 @@ CREATE TABLE order_items (
     order_id INT,
     product_id INT,
     quantity INT,
-    custom_text VARCHAR(255) NULL;
+    custom_text VARCHAR(255) NULL,
+    custom_fee DECIMAL(10,2) DEFAULT 0,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
@@ -51,7 +52,7 @@ CREATE TABLE help_requests (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
---logs ni guys
+-- logs ni guys
 
 CREATE TABLE logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -62,6 +63,14 @@ CREATE TABLE logs (
     action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE custom_orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    price DECIMAL(10,2),
+    custom_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
 
 -- For creating an Admin account (the password is always "admin")
 

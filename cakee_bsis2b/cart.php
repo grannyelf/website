@@ -111,7 +111,8 @@ if (empty($products) && empty($cartCustomized)): ?>
 
             if ($cake):
                 $subtotal = ($cake['price'] + $item['custom_fee']) * $item['quantity'];
-                $grandTotal += $subtotal;
+                $total += $subtotal; // ✅ Add to $total, not $grandTotal
+                $grandTotal = $total + $deliveryFee;            
             ?>
             <tr>
                 <td><?= htmlspecialchars($cake['name']) ?> <br><small>🎀 Custom: "<?= htmlspecialchars($item['custom_text']) ?>"</small></td>

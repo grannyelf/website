@@ -15,9 +15,9 @@ $stmt = $conn->prepare("
         orders.created_at,
         users.full_name,
         users.address,
+        users.phone,
         products.name AS product_name,
-        order_items.quantity,
-        order_items.custom_text  -- Capture custom text from the order_items table
+        order_items.quantity
     FROM orders
     INNER JOIN users ON orders.user_id = users.id
     INNER JOIN order_items ON orders.id = order_items.order_id
@@ -69,6 +69,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_done_id'])) {
     header("Location: user_orders.php");
     exit;
 }
+
+// Mark as For Delivery
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['mark_for_delivery_id'])) {
+    $orderId = intval($_POST['mark_for_delivery_id']);
+    $adminId = $_SESSION['user_id'];
+
+    $stmt = $conn->prepare("UPDATE orders SET status = 'Delivering' WHERE id = ?");
+    $stmt->bind_param("i", $orderId);
+    $stmt->execute();
+
+    $logStmt = $conn->prepare("INSERT INTO logs (order_id, action, admin_id) VALUES (?, 'Approved for Delivery', ?)");
+    $logStmt->bind_param("ii", $orderId, $adminId);
+    $logStmt->execute();
+
+    header("Location: user_orders.php");
+    exit;
+}
+
+
 
 // Cancel order
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
@@ -151,10 +170,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
 <header>
     <h1>All Orders</h1>
     <nav>
-        <a href="admin_dashb.php">Dashboard</a>
-        <a href="logout.php">Logout</a>
+        <a href="admin_dashb.php">Go Back?</a>
     </nav>
 </header>
+
+<main>
 
 <main>
 
@@ -164,47 +184,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
     <tr>
         <th>Order ID</th>
         <th>Customer</th>
+        <th>Phone</th>
         <th>Address</th>
         <th>Product</th>
         <th>Quantity</th>
-        <th>Custom Text</th> <!-- Added column for custom text -->
+        <th>Custom Text</th>
         <th>Total</th>
         <th>Date</th>
         <th>Status</th>
         <th>Action</th>
     </tr>
     <?php
-    mysqli_data_seek($result, 0); // Reset result pointer
+    mysqli_data_seek($result, 0);
     while ($row = $result->fetch_assoc()):
-        if ($row['status'] === 'Done' || $row['status'] === 'Cancelled') continue;
-        
-        // Fetch custom text for the current order item
+        if ($row['status'] !== 'Pending') continue;
+
         $orderId = $row['order_id'];
-        $customTextStmt = $conn->prepare("SELECT custom_text FROM order_items WHERE order_id = ?");
+        $customTextStmt = $conn->prepare("SELECT custom_message FROM custom_orders WHERE order_id = ?");
         $customTextStmt->bind_param("i", $orderId);
         $customTextStmt->execute();
         $customTextResult = $customTextStmt->get_result();
-        $customText = ''; // Default if no custom text
-        if ($customTextRow = $customTextResult->fetch_assoc()) {
-            $customText = $customTextRow['custom_text']; // Retrieve custom text
-        }
+        $customText = $customTextResult->fetch_assoc()['custom_message'] ?? '';
     ?>
         <tr>
             <td><?= $row['order_id'] ?></td>
             <td><?= htmlspecialchars($row['full_name']) ?></td>
+            <td><?= htmlspecialchars($row['phone']) ?></td>
             <td><?= htmlspecialchars($row['address']) ?></td>
             <td><?= htmlspecialchars($row['product_name']) ?></td>
             <td><?= $row['quantity'] ?></td>
-            <td><?= htmlspecialchars($customText) ?></td> <!-- Display custom text here -->
+            <td><?= htmlspecialchars($customText) ?></td>
             <td>₱<?= number_format($row['total_amount'], 2) ?></td>
             <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
-            <td class="status Pending"><?= htmlspecialchars($row['status']) ?></td>
+            <td class="status Pending"><?= $row['status'] ?></td>
             <td>
-                <form method="post" action="user_orders.php" style="display:inline;">
-                    <input type="hidden" name="mark_done_id" value="<?= $row['order_id'] ?>">
-                    <button type="submit" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:5px;">Mark as Done</button>
+                <form method="post" style="display:inline;">
+                    <input type="hidden" name="mark_for_delivery_id" value="<?= $row['order_id'] ?>">
+                    <button type="submit" style="padding:5px 10px; background:#FFA500; color:white; border:none; border-radius:5px;">Approve</button>
                 </form>
-                <form method="post" action="user_orders.php" style="display:inline;" onsubmit="return confirm('Cancel this order?');">
+                <form method="post" style="display:inline;" onsubmit="return confirm('Cancel this order?');">
                     <input type="hidden" name="cancel_order_id" value="<?= $row['order_id'] ?>">
                     <button type="submit" style="padding:5px 10px; background:#f44336; color:white; border:none; border-radius:5px;">Cancel</button>
                 </form>
@@ -214,12 +232,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
 </table>
 
 
+<!-- Delivery Section -->
+<h2 style="margin-top: 50px;">Delivery</h2>
+<table>
+    <tr>
+        <th>Order ID</th>
+        <th>Customer</th>
+        <th>Phone</th>
+        <th>Address</th>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Custom Text</th>
+        <th>Total</th>
+        <th>Date</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+    <?php
+    mysqli_data_seek($result, 0);
+    while ($row = $result->fetch_assoc()):
+        if ($row['status'] !== 'Delivering') continue;
+
+        $orderId = $row['order_id'];
+        $customTextStmt = $conn->prepare("SELECT custom_message FROM custom_orders WHERE order_id = ?");
+        $customTextStmt->bind_param("i", $orderId);
+        $customTextStmt->execute();
+        $customTextResult = $customTextStmt->get_result();
+        $customText = $customTextResult->fetch_assoc()['custom_message'] ?? '';
+    ?>
+        <tr>
+            <td><?= $row['order_id'] ?></td>
+            <td><?= htmlspecialchars($row['full_name']) ?></td>
+            <td><?= htmlspecialchars($row['phone']) ?></td>
+            <td><?= htmlspecialchars($row['address']) ?></td>
+            <td><?= htmlspecialchars($row['product_name']) ?></td>
+            <td><?= $row['quantity'] ?></td>
+            <td><?= htmlspecialchars($customText) ?></td>
+            <td>₱<?= number_format($row['total_amount'], 2) ?></td>
+            <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
+            <td class="status ForDelivery"><?= $row['status'] ?></td>
+            <td>
+                <form method="post">
+                    <input type="hidden" name="mark_done_id" value="<?= $row['order_id'] ?>">
+                    <button type="submit" style="padding:5px 10px; background:#4CAF50; color:white; border:none; border-radius:5px;">Mark as Done</button>
+                </form>
+            </td>
+        </tr>
+    <?php endwhile; ?>
+</table>
+
 <!-- Completed/Cancelled Orders Section -->
 <h2 style="margin-top: 50px;">Completed & Cancelled Orders</h2>
 <table>
     <tr>
         <th>Order ID</th>
         <th>Customer</th>
+        <th>Phone</th>
         <th>Address</th>
         <th>Product</th>
         <th>Quantity</th>
@@ -236,7 +304,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
         
         // Fetch custom text for the current order item
         $orderId = $row['order_id'];
-        $customTextStmt = $conn->prepare("SELECT custom_text FROM order_items WHERE order_id = ?");
+        $customTextStmt = $conn->prepare("SELECT custom_message FROM custom_orders WHERE order_id = ?");
         $customTextStmt->bind_param("i", $orderId);
         $customTextStmt->execute();
         $customTextResult = $customTextStmt->get_result();
@@ -248,6 +316,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
         <tr>
             <td><?= $row['order_id'] ?></td>
             <td><?= htmlspecialchars($row['full_name']) ?></td>
+            <td><?= htmlspecialchars($row['phone']) ?></td>
             <td><?= htmlspecialchars($row['address']) ?></td>
             <td><?= htmlspecialchars($row['product_name']) ?></td>
             <td><?= $row['quantity'] ?></td>

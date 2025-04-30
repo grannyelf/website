@@ -2,22 +2,6 @@
 session_start();
 include 'database.php';
 
-// Check if user is logged in and has an active order ID
-if (!isset($_SESSION['order_id'])) {
-    // If no order ID exists, create a new order for the user
-    $userId = $_SESSION['user_id']; // Assuming you store user_id in the session
-    
-    $orderStmt = $conn->prepare("INSERT INTO orders (user_id, status) VALUES (?, ?)");
-    $status = 'Pending'; // Assign the status before binding
-    $orderStmt->bind_param("is", $userId, $status);
-    $orderStmt->execute();
-    
-    // Get the generated order ID
-    $_SESSION['order_id'] = $conn->insert_id;
-} else {
-    $orderId = $_SESSION['order_id'];
-}
-
 // Fetch available cakes
 $stmt = $conn->prepare("SELECT * FROM products WHERE stock > 0");
 $stmt->execute();
@@ -29,27 +13,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $customText = trim($_POST['custom_text']);
 
     if ($productId && $customText) {
-        // Save to cart
-        $_SESSION['cart_customized'][] = [
-            'product_id' => $productId,
-            'custom_text' => $customText,
-            'quantity' => 1,
-            'custom_fee' => 50, // ₱50 fixed fee for customization
-        ];
+        // Get base price (optional; only if you want to show total later)
+        $priceStmt = $conn->prepare("SELECT price FROM products WHERE id = ?");
+        $priceStmt->bind_param("i", $productId);
+        $priceStmt->execute();
+        $priceResult = $priceStmt->get_result();
+        $product = $priceResult->fetch_assoc();
 
-        // Insert into order_items table
-        $quantity = 1; // You can adjust this if needed
-        $stmt = $conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, custom_text) VALUES (?, ?, ?, ?)");
-        
-        // Bind parameters correctly
-        $stmt->bind_param("iiis", $orderId, $productId, $quantity, $customText);
-        $stmt->execute();
+        if ($product) {
+            $customFee = 50;
+            $quantity = 1;
 
-        header('Location: cart.php');
-        exit;
+            // Just store in session — not the database!
+            $_SESSION['cart_customized'][] = [
+                'product_id' => $productId,
+                'custom_text' => $customText,
+                'quantity' => $quantity,
+                'custom_fee' => $customFee,
+            ];
+
+            header('Location: cart.php');
+            exit;
+        }
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html>
@@ -66,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-
 <h2>🎂 Customize Your Cake</h2>
+<a href="user_dashb.php" style="text-align: center; display: block; margin-bottom: 10px;">Go Back?</a>
 
 <form method="post" action="customize.php">
     <label>Select a Cake</label>
