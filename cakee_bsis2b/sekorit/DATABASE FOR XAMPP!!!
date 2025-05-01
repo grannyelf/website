@@ -4,6 +4,8 @@ CREATE TABLE users (
     full_name VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    phone INT(15) NOT NULL,
     role ENUM('user', 'admin') DEFAULT 'user'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -45,11 +47,21 @@ CREATE TABLE order_items (
 CREATE TABLE help_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
-    subject VARCHAR(255) NOT NULL,
+    subject VARCHAR(255),
     message TEXT NOT NULL,
-    status ENUM('Open', 'Resolved') DEFAULT 'Open',
+    status ENUM('Open', 'Closed') DEFAULT 'Open',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE help_replies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    request_id INT,
+    sender_role ENUM('user', 'admin') NOT NULL,
+    sender_id INT,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (request_id) REFERENCES help_requests(id) ON DELETE CASCADE
 );
 
 -- logs ni guys
@@ -68,6 +80,7 @@ CREATE TABLE custom_orders (
     order_id INT NOT NULL,
     price DECIMAL(10,2),
     custom_message TEXT,
+    quantity INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );

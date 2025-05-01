@@ -1,104 +1,81 @@
 <?php
 session_start();
+include 'database.php';
+
 if ($_SESSION['role'] !== 'admin') {
     header("Location: login.php");
     exit;
 }
-include 'database.php';
 
-$query = "SELECT help_requests.*, users.full_name FROM help_requests
-          JOIN users ON help_requests.user_id = users.id
-          ORDER BY created_at DESC";
-$result = $conn->query($query);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $msg = $_POST['message'];
+    $reqId = $_POST['request_id'];
+    $adminId = $_SESSION['user_id'];
+
+    if (isset($_POST['close'])) {
+        $conn->query("UPDATE help_requests SET status='Closed' WHERE id=$reqId");
+    } else {
+        $stmt = $conn->prepare("INSERT INTO help_replies (request_id, sender_role, sender_id, message) VALUES (?, 'admin', ?, ?)");
+        $stmt->bind_param("iis", $reqId, $adminId, $msg);
+        $stmt->execute();
+    }
+
+    header("Location: admin_help.php");
+    exit;
+}
+
+$helpRequests = $conn->query("
+    SELECT help_requests.*, users.full_name 
+    FROM help_requests 
+    JOIN users ON users.id = help_requests.user_id
+    WHERE help_requests.status='Open'
+    ORDER BY help_requests.created_at DESC
+");
 ?>
 
 <!DOCTYPE html>
-<html lang="en"></html>
-<meta charset="UTF-8">
-    <title>User Dashboard - Cakee Cakery</title>
-    <link rel="stylesheet" href="style.css">
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #fffaf5;
-        margin: 0;
-        padding: 2em;
-    }
-
-    header {
-        background: #f78ca2;
-        color: white;
-        padding: 1em;
-        text-align: center;
-    }
-
-    nav {
-        margin-bottom: 1.5em;
-        text-align: center;
-    }
-
-    nav a {
-        color: white;
-        margin: 0 1em;
-        text-decoration: none;
-        font-weight: bold;
-    }
-
-    table {
-        width: 100%;
-        margin-top: 1.5em;
-        border-collapse: collapse;
-        background: white;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-
-    th, td {
-        padding: 1em;
-        border-bottom: 1px solid #eee;
-        text-align: center;
-    }
-
-    th {
-        background: #fdd1dd;
-    }
-
-    .action-btn {
-        padding: 0.4em 1em;
-        background-color: #f78ca2;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-
-    .action-btn:hover {
-        background-color: #f45b7d;
-    }
-
-    .status {
-        font-weight: bold;
-        color: #f78ca2;
-    }
-
-    textarea {
-        width: 100%;
-        padding: 1em;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        margin-bottom: 1em;
-        font-family: Arial, sans-serif;
-    }
-</style>
+<html>
+<head>
+    <title>Admin Help Panel</title>
+    <style>
+        body { font-family: Arial; background: #fffaf5; padding: 20px; }
+        .ticket { background: #fff; border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 10px; }
+        .reply { margin-left: 20px; }
+        .user { font-weight: bold; }
+        textarea { width: 100%; height: 80px; margin-top: 10px; }
+    </style>
+</head>
 <body>
-<h2>User Help Requests. <a href="admin_dashb.php">Go back?</a></h2>
-<table>
-    <tr><th>User</th><th>Message</th><th>Time</th></tr>
-    <?php while ($row = $result->fetch_assoc()): ?>
-    <tr>
-        <td><?= $row['full_name'] ?></td>
-        <td><?= $row['message'] ?></td>
-        <td><?= $row['created_at'] ?></td>
-    </tr>
-    <?php endwhile; ?>
-</table>
+<h2>Help Requests. <a href="admin_dashb.php">Go back?</a></h2>
+
+<?php while ($r = $helpRequests->fetch_assoc()): ?>
+    <div class="ticket">
+        <p><strong><?= htmlspecialchars($r['full_name']) ?>:</strong> <?= htmlspecialchars($r['message']) ?></p>
+        <p><em>Created at: <?= $r['created_at'] ?></em></p>
+
+        <!-- Replies -->
+        <?php
+        $reqId = $r['id'];
+        $replies = $conn->query("SELECT * FROM help_replies WHERE request_id=$reqId ORDER BY created_at ASC");
+        while ($rep = $replies->fetch_assoc()):
+        ?>
+            <div class="reply">
+                <span class="<?= $rep['sender_role'] == 'admin' ? 'user' : '' ?>">
+                    <?= ucfirst($rep['sender_role']) ?>:
+                </span> <?= htmlspecialchars($rep['message']) ?> <small>(<?= $rep['created_at'] ?>)</small>
+            </div>
+        <?php endwhile; ?>
+
+        <!-- Reply form -->
+        <form method="post">
+            <input type="hidden" name="request_id" value="<?= $r['id'] ?>">
+            <textarea name="message" required placeholder="Type a reply..."></textarea><br>
+            <button type="submit">Send Reply</button>
+            <button name="close" value="1" type="submit" style="background:#ccc;">Close Ticket</button>
+        </form>
+    </div>
+<?php endwhile; ?>
+
+<a href="admin_help_archive.php">View Closed Tickets</a>
 </body>
+</html>

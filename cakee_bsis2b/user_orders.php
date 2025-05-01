@@ -188,7 +188,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
         <th>Address</th>
         <th>Product</th>
         <th>Quantity</th>
-        <th>Custom Text</th>
         <th>Total</th>
         <th>Date</th>
         <th>Status</th>
@@ -198,13 +197,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
     mysqli_data_seek($result, 0);
     while ($row = $result->fetch_assoc()):
         if ($row['status'] !== 'Pending') continue;
-
-        $orderId = $row['order_id'];
-        $customTextStmt = $conn->prepare("SELECT custom_message FROM custom_orders WHERE order_id = ?");
-        $customTextStmt->bind_param("i", $orderId);
-        $customTextStmt->execute();
-        $customTextResult = $customTextStmt->get_result();
-        $customText = $customTextResult->fetch_assoc()['custom_message'] ?? '';
     ?>
         <tr>
             <td><?= $row['order_id'] ?></td>
@@ -213,7 +205,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
             <td><?= htmlspecialchars($row['address']) ?></td>
             <td><?= htmlspecialchars($row['product_name']) ?></td>
             <td><?= $row['quantity'] ?></td>
-            <td><?= htmlspecialchars($customText) ?></td>
             <td>₱<?= number_format($row['total_amount'], 2) ?></td>
             <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
             <td class="status Pending"><?= $row['status'] ?></td>
@@ -242,7 +233,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
         <th>Address</th>
         <th>Product</th>
         <th>Quantity</th>
-        <th>Custom Text</th>
         <th>Total</th>
         <th>Date</th>
         <th>Status</th>
@@ -252,13 +242,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
     mysqli_data_seek($result, 0);
     while ($row = $result->fetch_assoc()):
         if ($row['status'] !== 'Delivering') continue;
-
-        $orderId = $row['order_id'];
-        $customTextStmt = $conn->prepare("SELECT custom_message FROM custom_orders WHERE order_id = ?");
-        $customTextStmt->bind_param("i", $orderId);
-        $customTextStmt->execute();
-        $customTextResult = $customTextStmt->get_result();
-        $customText = $customTextResult->fetch_assoc()['custom_message'] ?? '';
     ?>
         <tr>
             <td><?= $row['order_id'] ?></td>
@@ -267,7 +250,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
             <td><?= htmlspecialchars($row['address']) ?></td>
             <td><?= htmlspecialchars($row['product_name']) ?></td>
             <td><?= $row['quantity'] ?></td>
-            <td><?= htmlspecialchars($customText) ?></td>
             <td>₱<?= number_format($row['total_amount'], 2) ?></td>
             <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
             <td class="status ForDelivery"><?= $row['status'] ?></td>
@@ -291,7 +273,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
         <th>Address</th>
         <th>Product</th>
         <th>Quantity</th>
-        <th>Custom Text</th> <!-- Added column for custom text -->
         <th>Total</th>
         <th>Date</th>
         <th>Status</th>
@@ -301,17 +282,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
     mysqli_data_seek($result, 0); // Reset again for second loop
     while ($row = $result->fetch_assoc()):
         if ($row['status'] !== 'Done' && $row['status'] !== 'Cancelled') continue;
-        
-        // Fetch custom text for the current order item
-        $orderId = $row['order_id'];
-        $customTextStmt = $conn->prepare("SELECT custom_message FROM custom_orders WHERE order_id = ?");
-        $customTextStmt->bind_param("i", $orderId);
-        $customTextStmt->execute();
-        $customTextResult = $customTextStmt->get_result();
-        $customText = ''; // Default if no custom text
-        if ($customTextRow = $customTextResult->fetch_assoc()) {
-            $customText = $customTextRow['custom_text']; // Retrieve custom text
-        }
     ?>
         <tr>
             <td><?= $row['order_id'] ?></td>
@@ -320,7 +290,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order_id'])) {
             <td><?= htmlspecialchars($row['address']) ?></td>
             <td><?= htmlspecialchars($row['product_name']) ?></td>
             <td><?= $row['quantity'] ?></td>
-            <td><?= htmlspecialchars($customText) ?></td> <!-- Display custom text here -->
             <td>₱<?= number_format($row['total_amount'], 2) ?></td>
             <td><?= date("M d, Y", strtotime($row['created_at'])) ?></td>
             <td class="status <?= $row['status'] ?>"><?= htmlspecialchars($row['status']) ?></td>

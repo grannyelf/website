@@ -113,7 +113,6 @@ $result = $stmt->get_result();
     <nav>
         <a href="about.php">About</a>
         <a href="user_help.php">Help Support</a>
-        <a href="customize.php">Customize Cake</a>
         <a href="cart.php">My Cart</a>
         <a href="user_oderlist.php">Order List</a>
         <a href="logout.php">Logout</a>
